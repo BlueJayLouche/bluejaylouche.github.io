@@ -9,20 +9,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg:        #0d0d1a;
-      --surface:   #12122a;
-      --border:    #3a3a6a;
-      --yellow:    #f7e04b;
-      --cyan:      #4bf7e0;
-      --pink:      #f74bb8;
-      --purple:    #b44bf7;
-      --green:     #4bf76e;
-      --text:      #e8e8ff;
-      --muted:     #7070a0;
+      --bg:     #000008;
+      --surface: rgba(8, 8, 22, 0.88);
+      --border: #2a2a50;
+      --yellow: #ffee00;
+      --cyan:   #00ffee;
+      --pink:   #ff00aa;
+      --purple: #bb00ff;
+      --green:  #00ff66;
+      --red:    #ff2020;
+      --text:   #e0e0ff;
+      --muted:  #5050a0;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -34,32 +34,68 @@
       overflow-x: hidden;
     }
 
-    /* ── scanline overlay ── */
-    body::after {
-      content: '';
+    /* ── feedback loop canvas (background) ── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    /* ── scanlines ── */
+    #scanlines {
       position: fixed;
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
         transparent,
         transparent 2px,
-        rgba(0,0,0,.12) 2px,
-        rgba(0,0,0,.12) 4px
+        rgba(0,0,0,.15) 2px,
+        rgba(0,0,0,.15) 4px
       );
       pointer-events: none;
-      z-index: 9999;
+      z-index: 9000;
+    }
+
+    /* ── full-page glitch band overlay ── */
+    #glitch-band {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9001;
+      opacity: 0;
+    }
+    #glitch-band.fire {
+      animation: band-fire 0.25s steps(1) forwards;
+    }
+    @keyframes band-fire {
+      0%  { opacity:1; background:rgba(255,0,170,.07); clip-path:inset(15% 0 72% 0); transform:translateX(-6px); }
+      20% { background:rgba(0,255,238,.06); clip-path:inset(58% 0 28% 0); transform:translateX(6px); }
+      40% { background:rgba(255,238,0,.04); clip-path:inset(8%  0 82% 0); transform:translateX(-4px); }
+      60% { background:rgba(255,0,170,.06); clip-path:inset(73% 0 12% 0); transform:translateX(4px); }
+      80% { background:rgba(0,255,238,.04); clip-path:inset(35% 0 50% 0); transform:translateX(-2px); }
+      100%{ opacity:0; }
     }
 
     /* ── layout ── */
-    .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
 
     /* ── header ── */
     header {
-      border-bottom: 2px solid var(--border);
+      border-bottom: 1px solid var(--border);
       padding: 1rem 0;
       position: sticky;
       top: 0;
-      background: var(--bg);
+      background: rgba(0,0,8,.85);
+      backdrop-filter: blur(4px);
       z-index: 100;
     }
 
@@ -73,50 +109,102 @@
 
     .nav-logo {
       font-family: 'Press Start 2P', monospace;
-      font-size: .75rem;
+      font-size: .7rem;
       color: var(--cyan);
       text-decoration: none;
-      text-shadow: 0 0 10px var(--cyan);
-      letter-spacing: .05em;
+      text-shadow:
+        -2px 0 var(--pink),
+         2px 0 var(--cyan);
+      animation: logo-drift 6s ease-in-out infinite;
+    }
+    @keyframes logo-drift {
+      0%,100% { text-shadow: -2px 0 var(--pink), 2px 0 var(--cyan); }
+      30%     { text-shadow: -3px 0 var(--red),  3px 0 var(--purple); }
+      60%     { text-shadow: -1px 0 var(--yellow),1px 0 var(--green); }
     }
 
     .nav-links { display: flex; gap: 1.5rem; list-style: none; }
-
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 1.1rem;
-      transition: color .15s;
-    }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 1.1rem; transition: color .15s; }
     .nav-links a:hover { color: var(--yellow); }
 
     /* ── hero ── */
     .hero {
-      padding: 5rem 0 4rem;
+      padding: 6rem 0 5rem;
       text-align: center;
     }
 
-    .hero-title {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(1.2rem, 4vw, 2.2rem);
-      color: var(--yellow);
-      text-shadow: 4px 4px 0 var(--pink), 8px 8px 0 rgba(180,75,247,.4);
-      line-height: 1.4;
+    /* glitch title */
+    .glitch-wrap {
+      display: inline-block;
+      position: relative;
       margin-bottom: 1.5rem;
     }
 
+    .glitch-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1.2rem, 4vw, 2.2rem);
+      color: var(--yellow);
+      line-height: 1.5;
+      position: relative;
+      display: block;
+      animation: title-pulse 4s ease-in-out infinite;
+    }
+    @keyframes title-pulse {
+      0%,100% { text-shadow: 0 0 20px rgba(255,238,0,.5), 0 0 60px rgba(255,238,0,.2); }
+      50%     { text-shadow: 0 0 30px rgba(255,238,0,.8), 0 0 80px rgba(255,238,0,.3); }
+    }
+
+    .glitch-title::before,
+    .glitch-title::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      font-family: inherit; font-size: inherit;
+    }
+    .glitch-title::before {
+      color: var(--pink);
+      animation: glitch-a 5s infinite;
+      left: -3px;
+    }
+    .glitch-title::after {
+      color: var(--cyan);
+      animation: glitch-b 5s infinite;
+      left: 3px;
+    }
+
+    @keyframes glitch-a {
+      0%,84%,100%    { clip-path:inset(50% 0 50% 0); opacity:0; }
+      85%            { clip-path:inset(12% 0 68% 0); opacity:1; transform:translateX(-5px); }
+      86%            { clip-path:inset(72% 0  8% 0);             transform:translateX( 3px); }
+      87%            { clip-path:inset(38% 0 40% 0);             transform:translateX(-3px); }
+      88%            { clip-path:inset(50% 0 50% 0); opacity:0; }
+      94%            { clip-path:inset( 4% 0 86% 0); opacity:1; transform:translateX( 4px); }
+      95%            { clip-path:inset(50% 0 50% 0); opacity:0; }
+    }
+    @keyframes glitch-b {
+      0%,84%,100%    { clip-path:inset(50% 0 50% 0); opacity:0; }
+      85%            { clip-path:inset(62% 0 18% 0); opacity:1; transform:translateX( 5px); }
+      86%            { clip-path:inset(22% 0 58% 0);             transform:translateX(-3px); }
+      87%            { clip-path:inset(48% 0 28% 0);             transform:translateX( 3px); }
+      88%            { clip-path:inset(50% 0 50% 0); opacity:0; }
+      94%            { clip-path:inset(78% 0  8% 0); opacity:1; transform:translateX(-4px); }
+      95%            { clip-path:inset(50% 0 50% 0); opacity:0; }
+    }
+
     .hero-sub {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       color: var(--cyan);
       margin-bottom: 2.5rem;
+      min-height: 1.8rem;
     }
 
     .cursor {
       display: inline-block;
-      width: .65em;
-      height: 1em;
+      width: .55em; height: .9em;
       background: var(--cyan);
       vertical-align: text-bottom;
+      margin-left: 2px;
       animation: blink 1s step-end infinite;
     }
     @keyframes blink { 50% { opacity: 0; } }
@@ -130,15 +218,27 @@
       border: 2px solid;
       text-transform: uppercase;
       letter-spacing: .08em;
+      position: relative;
+      overflow: hidden;
     }
+    .badge::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: currentColor;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .badge:hover::after { opacity: .12; }
+
     .badge-yellow { color: var(--yellow); border-color: var(--yellow); }
     .badge-pink   { color: var(--pink);   border-color: var(--pink); }
     .badge-purple { color: var(--purple); border-color: var(--purple); }
     .badge-green  { color: var(--green);  border-color: var(--green); }
     .badge-cyan   { color: var(--cyan);   border-color: var(--cyan); }
 
-    /* ── section shared ── */
-    section { padding: 4rem 0; }
+    /* ── sections ── */
+    section { padding: 4rem 0; position: relative; z-index: 1; }
 
     .section-header {
       display: flex;
@@ -149,33 +249,44 @@
 
     .section-title {
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(.7rem, 2.5vw, 1rem);
+      font-size: clamp(.65rem, 2.2vw, .9rem);
       color: var(--pink);
-      text-shadow: 2px 2px 0 rgba(247,75,184,.3);
+      text-shadow: 0 0 10px rgba(255,0,170,.5);
       white-space: nowrap;
     }
 
     .section-line {
       flex: 1;
-      height: 2px;
+      height: 1px;
       background: linear-gradient(to right, var(--pink), transparent);
+      position: relative;
+      overflow: hidden;
     }
+    .section-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,.6), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    @keyframes shimmer { to { left: 200%; } }
 
     /* ── about ── */
     .about-box {
       background: var(--surface);
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
       padding: 2rem;
+      backdrop-filter: blur(8px);
       position: relative;
     }
-
     .about-box::before {
       content: '> ';
       color: var(--green);
+      text-shadow: 0 0 8px var(--green);
       font-size: 1.4rem;
     }
-
-    .about-box p { display: inline; font-size: 1.4rem; color: var(--text); }
+    .about-box p { display: inline; font-size: 1.4rem; }
 
     /* ── projects ── */
     .projects-grid {
@@ -186,39 +297,63 @@
 
     .project-card {
       background: var(--surface);
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
       padding: 1.5rem;
       text-decoration: none;
       color: inherit;
       display: flex;
       flex-direction: column;
       gap: .75rem;
-      transition: border-color .15s, transform .15s;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(8px);
+      transition: transform .12s;
     }
 
+    /* animated corner brackets */
+    .project-card::before,
     .project-card::after {
       content: '';
       position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, transparent 60%, rgba(75,247,224,.05));
-      pointer-events: none;
+      width: 12px; height: 12px;
+      transition: width .2s, height .2s;
+    }
+    .project-card::before {
+      top: -1px; left: -1px;
+      border-top: 2px solid var(--cyan);
+      border-left: 2px solid var(--cyan);
+    }
+    .project-card::after {
+      bottom: -1px; right: -1px;
+      border-bottom: 2px solid var(--cyan);
+      border-right: 2px solid var(--cyan);
     }
 
     .project-card:hover {
-      border-color: var(--cyan);
       transform: translate(-3px, -3px);
-      box-shadow: 6px 6px 0 var(--cyan);
+      border-color: rgba(0,255,238,.3);
+    }
+    .project-card:hover::before,
+    .project-card:hover::after { width: 24px; height: 24px; }
+
+    /* glitch on hover via filter */
+    .project-card:hover .project-name {
+      animation: text-glitch-quick .2s steps(1) infinite;
+    }
+    @keyframes text-glitch-quick {
+      0%  { text-shadow: -2px 0 var(--pink), 2px 0 var(--cyan); }
+      33% { text-shadow:  2px 0 var(--red),  -2px 0 var(--purple); }
+      66% { text-shadow: -1px 0 var(--cyan), 1px 0 var(--pink); }
+      100%{ text-shadow: none; }
     }
 
     .project-icon { font-size: 2rem; }
 
     .project-name {
       font-family: 'Press Start 2P', monospace;
-      font-size: .65rem;
+      font-size: .62rem;
       color: var(--yellow);
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .project-desc { font-size: 1.2rem; color: var(--muted); }
@@ -229,17 +364,13 @@
       font-family: 'Press Start 2P', monospace;
       font-size: .4rem;
       padding: .3em .6em;
-      background: rgba(255,255,255,.05);
+      background: rgba(255,255,255,.04);
       border: 1px solid var(--border);
       color: var(--muted);
     }
 
     /* ── contact ── */
-    .contact-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
+    .contact-links { display: flex; flex-wrap: wrap; gap: 1rem; }
 
     .contact-link {
       font-family: 'Press Start 2P', monospace;
@@ -247,48 +378,39 @@
       padding: .8em 1.2em;
       border: 2px solid;
       text-decoration: none;
-      transition: background .15s, color .15s;
-      display: inline-flex;
-      align-items: center;
-      gap: .5em;
+      transition: background .15s, color .15s, box-shadow .15s;
     }
-
     .contact-link-github { color: var(--cyan);   border-color: var(--cyan); }
-    .contact-link-github:hover { background: var(--cyan); color: var(--bg); }
-
+    .contact-link-github:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 20px var(--cyan); }
     .contact-link-email  { color: var(--yellow); border-color: var(--yellow); }
-    .contact-link-email:hover { background: var(--yellow); color: var(--bg); }
-
+    .contact-link-email:hover { background: var(--yellow); color: var(--bg); box-shadow: 0 0 20px var(--yellow); }
     .contact-link-other  { color: var(--purple); border-color: var(--purple); }
-    .contact-link-other:hover { background: var(--purple); color: var(--bg); }
+    .contact-link-other:hover { background: var(--purple); color: var(--bg); box-shadow: 0 0 20px var(--purple); }
 
     /* ── footer ── */
     footer {
-      border-top: 2px solid var(--border);
+      border-top: 1px solid var(--border);
       padding: 2rem 0;
       text-align: center;
       color: var(--muted);
       font-size: 1rem;
+      position: relative;
+      z-index: 1;
     }
-
     footer span { color: var(--pink); }
-
-    /* ── pixel corner decoration ── */
-    .pixel-corner {
-      display: inline-block;
-      width: 8px; height: 8px;
-      background: var(--cyan);
-      box-shadow: 8px 0 0 var(--cyan), 0 8px 0 var(--cyan);
-    }
 
     /* ── responsive ── */
     @media (max-width: 500px) {
-      .hero { padding: 3rem 0 2.5rem; }
+      .hero { padding: 3.5rem 0 2.5rem; }
       .nav-links { gap: 1rem; }
     }
   </style>
 </head>
 <body>
+
+  <canvas id="bg-canvas"></canvas>
+  <div id="scanlines"></div>
+  <div id="glitch-band"></div>
 
   <!-- ── HEADER ── -->
   <header>
@@ -307,8 +429,10 @@
   <!-- ── HERO ── -->
   <section class="hero">
     <div class="container">
-      <h1 class="hero-title">BlueJayLouche</h1>
-      <p class="hero-sub">maker / tinkerer / creative<span class="cursor"></span></p>
+      <div class="glitch-wrap">
+        <span class="glitch-title" data-text="BlueJayLouche">BlueJayLouche</span>
+      </div>
+      <p class="hero-sub"><span id="scramble-text">maker / tinkerer / creative</span><span class="cursor"></span></p>
       <div class="hero-badges">
         <span class="badge badge-yellow">✦ code</span>
         <span class="badge badge-pink">✦ art</span>
@@ -345,7 +469,6 @@
       </div>
       <div class="projects-grid">
 
-        <!-- Project card — duplicate / edit as needed -->
         <a class="project-card" href="#" target="_blank" rel="noopener">
           <div class="project-icon">🎛️</div>
           <div class="project-name">Project One</div>
@@ -400,14 +523,9 @@
       <div class="contact-links">
         <a class="contact-link contact-link-github"
            href="https://github.com/BlueJayLouche"
-           target="_blank" rel="noopener">
-          &#9654; GitHub
-        </a>
+           target="_blank" rel="noopener">&#9654; GitHub</a>
         <a class="contact-link contact-link-email"
-           href="mailto:your@email.com">
-          &#9654; Email
-        </a>
-        <!-- add more links here — Mastodon, itch.io, etc. -->
+           href="mailto:your@email.com">&#9654; Email</a>
       </div>
     </div>
   </section>
@@ -419,5 +537,185 @@
     </div>
   </footer>
 
+  <script>
+    // ── FEEDBACK LOOP CANVAS ──────────────────────────────────────────────────
+    const canvas = document.getElementById('bg-canvas');
+    const ctx    = canvas.getContext('2d');
+    let hue      = 200;
+    let tick     = 0;
+
+    function resizeCanvas() {
+      // Preserve existing image across resize
+      let saved = null;
+      if (canvas.width > 0 && canvas.height > 0) {
+        try { saved = ctx.getImageData(0, 0, canvas.width, canvas.height); } catch(e) {}
+      }
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      if (saved) ctx.putImageData(saved, 0, 0);
+      else seed();
+    }
+
+    function seed() {
+      // Initial seeds that the feedback loop will grow from
+      ctx.save();
+      for (let i = 0; i < 8; i++) {
+        ctx.globalAlpha = 0.6 + Math.random() * 0.3;
+        ctx.fillStyle = `hsl(${(180 + i * 35) % 360}, 100%, 60%)`;
+        const w = 15 + Math.random() * 80;
+        const h = 2  + Math.random() * 12;
+        ctx.fillRect(
+          canvas.width  * 0.25 + Math.random() * canvas.width  * 0.5,
+          canvas.height * 0.25 + Math.random() * canvas.height * 0.5,
+          w, h
+        );
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    function feedbackFrame() {
+      tick++;
+      const cx = canvas.width  / 2;
+      const cy = canvas.height / 2;
+
+      // === Core feedback: draw self scaled up from center ===
+      ctx.save();
+      ctx.globalAlpha = 0.93;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.translate(cx, cy);
+      ctx.scale(1.004, 1.004);
+      ctx.rotate(0.0008);
+      ctx.translate(-cx, -cy);
+      ctx.drawImage(canvas, 0, 0);
+      ctx.restore();
+
+      // === Fade toward black to prevent blowout ===
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 0.035;
+      ctx.fillStyle = '#00000a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
+
+      // === Color tint / hue cycle ===
+      hue = (hue + 0.25) % 360;
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.012;
+      ctx.fillStyle = `hsl(${hue}, 100%, 55%)`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+
+      // === Datamosh: random horizontal band displacement ===
+      if (Math.random() < 0.04) {
+        const y  = Math.random() * canvas.height;
+        const bh = 2 + Math.random() * 25;
+        const dx = (Math.random() - 0.5) * 50;
+        ctx.drawImage(canvas, 0, y, canvas.width, bh, dx, y, canvas.width, bh);
+      }
+
+      // === Occasional vertical smear (VHS-style) ===
+      if (Math.random() < 0.015) {
+        const x  = Math.random() * canvas.width;
+        const bw = 1 + Math.random() * 6;
+        const dy = (Math.random() - 0.5) * 30;
+        ctx.drawImage(canvas, x, 0, bw, canvas.height, x, dy, bw, canvas.height);
+      }
+
+      // === RGB channel echo ===
+      if (Math.random() < 0.025) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = 0.25;
+        ctx.drawImage(canvas, -4, 0);
+        ctx.restore();
+      }
+
+      // === Seed fresh bright lines to keep it alive ===
+      if (Math.random() < 0.05) {
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.random() * 0.4;
+        ctx.fillStyle = `hsl(${(hue + 180) % 360}, 100%, 65%)`;
+        const sw = 8 + Math.random() * 60;
+        const sh = 1 + Math.random() * 5;
+        ctx.fillRect(
+          canvas.width  * 0.2 + Math.random() * canvas.width  * 0.6,
+          canvas.height * 0.2 + Math.random() * canvas.height * 0.6,
+          sw, sh
+        );
+        ctx.restore();
+      }
+
+      requestAnimationFrame(feedbackFrame);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    requestAnimationFrame(feedbackFrame);
+
+
+    // ── TEXT SCRAMBLE ─────────────────────────────────────────────────────────
+    const CHARSET = '!<>-_\\/[]{}=+*^?#@░▒▓│┤╡╣║╗╝┐└┴┬├─┼╔╩╦╠═╬┘┌▀▄█▌▐';
+
+    function scramble(el, finalText, duration) {
+      let iter = 0;
+      const totalFrames = duration / 30;
+      clearInterval(el._scrambleTimer);
+      el._scrambleTimer = setInterval(() => {
+        el.textContent = finalText
+          .split('')
+          .map((ch, i) => {
+            if (ch === ' ') return ' ';
+            if (i < Math.floor(iter)) return finalText[i];
+            return CHARSET[Math.floor(Math.random() * CHARSET.length)];
+          })
+          .join('');
+        iter += finalText.length / totalFrames;
+        if (iter >= finalText.length) {
+          el.textContent = finalText;
+          clearInterval(el._scrambleTimer);
+        }
+      }, 30);
+    }
+
+    const scrambleEl   = document.getElementById('scramble-text');
+    const scrambleText = scrambleEl.textContent;
+
+    function scheduleScramble() {
+      scramble(scrambleEl, scrambleText, 1400);
+      setTimeout(scheduleScramble, 6000 + Math.random() * 6000);
+    }
+    setTimeout(scheduleScramble, 2500);
+
+
+    // ── FULL-PAGE GLITCH BAND ────────────────────────────────────────────────
+    const band = document.getElementById('glitch-band');
+
+    function fireGlitchBand() {
+      band.classList.remove('fire');
+      void band.offsetWidth; // force reflow to restart animation
+      band.classList.add('fire');
+      setTimeout(fireGlitchBand, 3500 + Math.random() * 7000);
+    }
+    setTimeout(fireGlitchBand, 1200);
+
+
+    // ── CLICK-TO-SEED ────────────────────────────────────────────────────────
+    // Click anywhere on the canvas to inject a new burst into the feedback loop
+    canvas.addEventListener('click', (e) => {
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      for (let i = 0; i < 6; i++) {
+        ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 65%)`;
+        ctx.fillRect(
+          e.clientX - 30 + Math.random() * 60,
+          e.clientY - 10 + Math.random() * 20,
+          5 + Math.random() * 40,
+          1 + Math.random() * 8
+        );
+      }
+      ctx.restore();
+    });
+  </script>
 </body>
 </html>
