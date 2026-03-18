@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlueJayLouche</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0d0d1a;
+      --surface:   #12122a;
+      --border:    #3a3a6a;
+      --yellow:    #f7e04b;
+      --cyan:      #4bf7e0;
+      --pink:      #f74bb8;
+      --purple:    #b44bf7;
+      --green:     #4bf76e;
+      --text:      #e8e8ff;
+      --muted:     #7070a0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── scanline overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.12) 2px,
+        rgba(0,0,0,.12) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── layout ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ── header ── */
+    header {
+      border-bottom: 2px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .75rem;
+    }
+
+    .nav-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .75rem;
+      color: var(--cyan);
+      text-decoration: none;
+      text-shadow: 0 0 10px var(--cyan);
+      letter-spacing: .05em;
+    }
+
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--yellow); }
+
+    /* ── hero ── */
+    .hero {
+      padding: 5rem 0 4rem;
+      text-align: center;
+    }
+
+    .hero-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1.2rem, 4vw, 2.2rem);
+      color: var(--yellow);
+      text-shadow: 4px 4px 0 var(--pink), 8px 8px 0 rgba(180,75,247,.4);
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-sub {
+      font-size: 1.6rem;
+      color: var(--cyan);
+      margin-bottom: 2.5rem;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: .65em;
+      height: 1em;
+      background: var(--cyan);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .hero-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
+
+    .badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      padding: .4em .8em;
+      border: 2px solid;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .badge-yellow { color: var(--yellow); border-color: var(--yellow); }
+    .badge-pink   { color: var(--pink);   border-color: var(--pink); }
+    .badge-purple { color: var(--purple); border-color: var(--purple); }
+    .badge-green  { color: var(--green);  border-color: var(--green); }
+    .badge-cyan   { color: var(--cyan);   border-color: var(--cyan); }
+
+    /* ── section shared ── */
+    section { padding: 4rem 0; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.7rem, 2.5vw, 1rem);
+      color: var(--pink);
+      text-shadow: 2px 2px 0 rgba(247,75,184,.3);
+      white-space: nowrap;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(to right, var(--pink), transparent);
+    }
+
+    /* ── about ── */
+    .about-box {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 2rem;
+      position: relative;
+    }
+
+    .about-box::before {
+      content: '> ';
+      color: var(--green);
+      font-size: 1.4rem;
+    }
+
+    .about-box p { display: inline; font-size: 1.4rem; color: var(--text); }
+
+    /* ── projects ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .project-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      transition: border-color .15s, transform .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .project-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 60%, rgba(75,247,224,.05));
+      pointer-events: none;
+    }
+
+    .project-card:hover {
+      border-color: var(--cyan);
+      transform: translate(-3px, -3px);
+      box-shadow: 6px 6px 0 var(--cyan);
+    }
+
+    .project-icon { font-size: 2rem; }
+
+    .project-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .65rem;
+      color: var(--yellow);
+      line-height: 1.5;
+    }
+
+    .project-desc { font-size: 1.2rem; color: var(--muted); }
+
+    .project-tags { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: auto; }
+
+    .tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      padding: .3em .6em;
+      background: rgba(255,255,255,.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* ── contact ── */
+    .contact-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .contact-link {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      padding: .8em 1.2em;
+      border: 2px solid;
+      text-decoration: none;
+      transition: background .15s, color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .5em;
+    }
+
+    .contact-link-github { color: var(--cyan);   border-color: var(--cyan); }
+    .contact-link-github:hover { background: var(--cyan); color: var(--bg); }
+
+    .contact-link-email  { color: var(--yellow); border-color: var(--yellow); }
+    .contact-link-email:hover { background: var(--yellow); color: var(--bg); }
+
+    .contact-link-other  { color: var(--purple); border-color: var(--purple); }
+    .contact-link-other:hover { background: var(--purple); color: var(--bg); }
+
+    /* ── footer ── */
+    footer {
+      border-top: 2px solid var(--border);
+      padding: 2rem 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    footer span { color: var(--pink); }
+
+    /* ── pixel corner decoration ── */
+    .pixel-corner {
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--cyan);
+      box-shadow: 8px 0 0 var(--cyan), 0 8px 0 var(--cyan);
+    }
+
+    /* ── responsive ── */
+    @media (max-width: 500px) {
+      .hero { padding: 3rem 0 2.5rem; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="container">
+      <nav>
+        <a class="nav-logo" href="#">BJL</a>
+        <ul class="nav-links">
+          <li><a href="#about">About</a></li>
+          <li><a href="#projects">Projects</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="container">
+      <h1 class="hero-title">BlueJayLouche</h1>
+      <p class="hero-sub">maker / tinkerer / creative<span class="cursor"></span></p>
+      <div class="hero-badges">
+        <span class="badge badge-yellow">✦ code</span>
+        <span class="badge badge-pink">✦ art</span>
+        <span class="badge badge-purple">✦ music</span>
+        <span class="badge badge-green">✦ hardware</span>
+        <span class="badge badge-cyan">✦ open source</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ── -->
+  <section id="about">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">// About</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="about-box">
+        <p>
+          Hey! I'm BlueJayLouche — I build weird and wonderful things at the intersection of
+          code, art, and electronics. This is my little corner of the internet where I share
+          what I'm working on. Poke around, break something, have fun.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROJECTS ── -->
+  <section id="projects">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">// Projects</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="projects-grid">
+
+        <!-- Project card — duplicate / edit as needed -->
+        <a class="project-card" href="#" target="_blank" rel="noopener">
+          <div class="project-icon">🎛️</div>
+          <div class="project-name">Project One</div>
+          <p class="project-desc">A short description of what this project does and why it's cool.</p>
+          <div class="project-tags">
+            <span class="tag">C++</span>
+            <span class="tag">hardware</span>
+          </div>
+        </a>
+
+        <a class="project-card" href="#" target="_blank" rel="noopener">
+          <div class="project-icon">🌀</div>
+          <div class="project-name">Project Two</div>
+          <p class="project-desc">Another interesting thing you made. Keep it snappy.</p>
+          <div class="project-tags">
+            <span class="tag">Python</span>
+            <span class="tag">visuals</span>
+          </div>
+        </a>
+
+        <a class="project-card" href="#" target="_blank" rel="noopener">
+          <div class="project-icon">🔊</div>
+          <div class="project-name">Project Three</div>
+          <p class="project-desc">Sounds, signals, synthesis — whatever you're into.</p>
+          <div class="project-tags">
+            <span class="tag">audio</span>
+            <span class="tag">DSP</span>
+          </div>
+        </a>
+
+        <a class="project-card" href="#" target="_blank" rel="noopener">
+          <div class="project-icon">💾</div>
+          <div class="project-name">Project Four</div>
+          <p class="project-desc">Yet another cool thing. Fill in the blanks!</p>
+          <div class="project-tags">
+            <span class="tag">web</span>
+            <span class="tag">js</span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONTACT ── -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">// Contact</h2>
+        <div class="section-line"></div>
+      </div>
+      <div class="contact-links">
+        <a class="contact-link contact-link-github"
+           href="https://github.com/BlueJayLouche"
+           target="_blank" rel="noopener">
+          &#9654; GitHub
+        </a>
+        <a class="contact-link contact-link-email"
+           href="mailto:your@email.com">
+          &#9654; Email
+        </a>
+        <!-- add more links here — Mastodon, itch.io, etc. -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container">
+      <p>made with <span>&#9829;</span> by BlueJayLouche &mdash; <span>no cookies, no trackers, just vibes</span></p>
+    </div>
+  </footer>
+
+</body>
+</html>
